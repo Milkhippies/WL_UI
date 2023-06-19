@@ -1,5 +1,5 @@
-### Общее для запусков и редактирования:
-- в ./data/user_data.py вписать секрет в 'secret' (заменить "*" секретом)
+### Общее для запусков:
+- в ./data/user_data.py вписать креды пользователя и секрет
 - установить зависимости pip install -r requirements.txt
 ### Для локального запуска через соленоид
 - установить [docker](https://docs.docker.com/engine/install/) и [docker compose](https://docs.docker.com/compose/install/)
