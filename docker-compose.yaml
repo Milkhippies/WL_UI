@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  ui_tests:
+    container_name: ui_tests
+    networks:
+      - selenoid_network
+    build: ./
+    ports:
+      - "5001:5001"
+    depends_on:
+      - selenoid
+    volumes:
+      - "./selenoid/video:/opt/selenoid/video"
+    command: bash -c 'pytest -v -m only_creation -n 3 ;
+      pytest -v -m only_delete -n 3 ;
+      pytest -v -m rename -n 5 ;
+      allure serve ./allure --port 5001'
+
+  selenoid:
+    container_name: selenoid
+    networks:
+      - selenoid_network
+    image: aerokube/selenoid:latest-release
+    volumes:
+      - "./selenoid/config:/etc/selenoid/config"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./selenoid/video:/opt/selenoid/video"
+      - "./selenoid/logs:/opt/selenoid/logs"
+    environment:
+      - OVERRIDE_VIDEO_OUTPUT_DIR=${PWD}/selenoid/video
+    command: ["-conf", "/etc/selenoid/config/browsers.json", "-container-network", "selenoid_network", "-limit", "5", "-video-output-dir", "/opt/selenoid/video"]
+    ports:
+      - "4444:4444"
+
+  selenoid-ui:
+    container_name: selenoid_ui
+    image: aerokube/selenoid-ui:latest
+    networks:
+      - selenoid_network
+    depends_on:
+      - selenoid
+    ports:
+      - "8080:8080"
+    command: ["--selenoid-uri", "http://selenoid:4444"]
+
+  chrome_113:
+    container_name: chrome_113
+    image: selenoid/chrome:113.0
+    depends_on:
+      - selenoid
+
+  selenoid-recorder:
+    container_name: selenoid-recorder
+    image: selenoid/video-recorder:latest-release
+    depends_on:
+      - selenoid
+
+networks:
+  selenoid_network:
+    name: selenoid_network
+    driver: bridge
